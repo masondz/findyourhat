@@ -1,0 +1,170 @@
+const prompt = require('prompt-sync')({sigint: true});
+
+const hat = '^';
+const hole = 'O';
+const fieldCharacter = '░';
+const playerCharacter = '*';
+const winnerHat = 'Ʌ';
+let gameMode = true;
+
+class Field {
+  constructor(field) {
+    this.field = field;
+  }
+    
+  generateField(width, height) { 
+    let randomChar = () =>{ //first, 30% of a field character becoming a hole.
+    let number = Math.floor(Math.random() * 10);
+      if (number < 7 ) {
+        return fieldCharacter;
+      } else {
+        return hole;
+     };
+     }  
+    let row = [];
+    let column = [];
+    for (let j = 0; j < height; j++) {
+    for (let i = 0; i < width; i++) {
+      let space = randomChar();
+      row.push(space);
+      };
+      column.push(row);
+      row = [];
+    };
+    let randColumn = 0;
+    let randRow = 0;
+    while (randColumn === 0 && randRow === 0) { //find a spot for the hat
+      randColumn = Math.floor(Math.random() * column.length);
+      randRow = Math.floor(Math.random() * width);
+    }
+    column[randColumn][randRow] = hat;
+    column[0][0] = playerCharacter; //put layer at 0, 0
+    return this.field = column;
+  }
+
+  print(field) {
+    console.log("You must navigate this holey field \nand find your missing hat. \nBut don't fall into a hole, \nand don't step out of bounds!\n");
+    let str = '';
+    for (let i = 0; i < field.length; i++) {
+      str += field[i].join('')+"\n";
+    };
+      console.log(str);
+  }
+
+  refreshField(y,x) {
+    process.stdout.write('\x1Bc'); // clears the console
+    this.print(this.field);
+    this.field[y][x] = '*';
+  };
+  
+  setUpGame(width, height){ // this also users to pick a new field.
+    this.generateField(width, height);
+    this.print(this.field);
+    let ready = false;
+    while ( ready === false ) {
+      let choice = prompt(`hit s to start, n for new field: `);
+      if (choice.toUpperCase() === 'N') {
+        process.stdout.write('\x1Bc');
+        this.field = this.generateField(width, height);
+        this.print(this.field);
+      } else if (choice.toUpperCase() === 'S') {
+        process.stdout.write('\x1Bc'); //clears the console
+        ready = true;
+      };
+    };
+  }
+
+  checkGame(y,x, width, height){
+    if (this.field[y][x] === hat){
+      return "win";
+    } else if (this.field[y][x] === hole){
+      return "hole";
+    };
+  }
+
+  winGame(){
+    process.stdout.write('\x1Bc'); // clears the console
+    console.log(`  Ʌ  \n _O_ \n  | \n / \\ \nYou found your hat!`);
+  }
+
+  loseGame(){
+    process.stdout.write('\x1Bc'); // clears the console
+    console.log("  ____ \n/     \\\n|x   x| \n\\_|_|_/ \nYou fell in a hole! LOSER!!");
+  }
+  
+  playGame(width, height) {
+    process.stdout.write('\x1Bc'); // clears the console
+    let y = 0;
+    let x = 0;
+    this.setUpGame(width, height);
+    this.refreshField(y,x);
+    while (gameMode === true) {
+      process.stdout.write('\x1Bc'); // clears the console everytime a dirction is picked.
+      this.refreshField(y,x);
+      console.log("W for up, S for down, A for left, D for right");
+      let run = prompt("Pick a direction: ");
+      if (run.toUpperCase() === 'D'){
+        process.stdout.write('\x1Bc'); // clears the console
+        x ++; 
+        if(x > (width-1)) {
+          console.log("you left the field. LOSER!!")
+          break;
+        } if (this.checkGame(y,x)=== "win"){ //use checkGame and winGam and loseGame
+          this.winGame();
+          break;
+        } else if (this.checkGame(y,x) === "hole"){
+          this.loseGame();
+          break;
+        };
+        this.refreshField(y,x);
+        } else if (run.toUpperCase() === 'A') {
+          process.stdout.write('\x1Bc'); // clears the console
+          x --;
+          if (x < 0) {
+            console.log("you left the field. LOSER!!")
+            break;
+          } if (this.checkGame(y,x)=== "win"){ 
+            this.winGame();
+            break;
+          } else if (this.checkGame(y,x) === "hole"){
+            this.loseGame();
+            break;
+        };
+          this.refreshField(y,x);
+        } else if (run.toUpperCase() === 'S') {
+          process.stdout.write('\x1Bc'); // clears the console
+          y ++;
+          if(y > (height-1)) {
+          console.log("you left the field. LOSER!!")
+          break;
+        } if (this.checkGame(y,x)=== "win"){ 
+          this.winGame();
+          break;
+        } else if (this.checkGame(y,x) === "hole"){
+          this.loseGame();
+          break;
+        };
+          this.refreshField(y,x);
+        } else if (run.toUpperCase() === 'W') {
+          process.stdout.write('\x1Bc'); // clears the console
+          y --;
+          if (y < 0) {
+            console.log("you left the field. LOSER!!")
+            break;
+          } if (this.checkGame(y,x)=== "win"){ 
+          this.winGame();
+          break;
+          } else if (this.checkGame(y,x) === "hole"){
+          this.loseGame();
+          break;
+        };
+          this.refreshField(y,x);
+        }
+    };
+  }
+
+};
+
+const myField = new Field();
+
+myField.playGame(10,10);
